@@ -1,0 +1,8 @@
+common_const_tag:
+  base_folder_path: "."
+
+inference:
+  test_image: "${common_const_tag.base_folder_path}/assets/dogs.jpg"
+  weights_path: "${common_const_tag.base_folder_path}/weights/FastSAM-x.pt"
+  output_path: "${common_const_tag.base_folder_path}/output/"
+  clip_model: 'ViT-B/32'
