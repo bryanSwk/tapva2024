@@ -52,10 +52,10 @@ def startup_event(config=config()) -> None:
 async def ping(
 ) -> Dict[str, str]:
     """
-    Returns the health status of the server
+    Returns the health status of the server.
 
     Returns:
-        Dict[str, str]: JSON payload of the ping API
+        Dict[str, str]: JSON payload indicating server health status.
     """
     msg = {"message": "pong"}
     return JSONResponse(content = msg)
@@ -64,6 +64,17 @@ async def ping(
 async def infer(image: UploadFile = File(...), 
                 request_data: Json = EverythingMode()
                 ):
+    """
+    Endpoint for image inference.
+
+    Args:
+        image (UploadFile): The uploaded image file.
+        request_data (Json): The JSON data containing inference request details.
+
+    Returns:
+        dict: A dictionary containing the inference result and mode information.
+    """
+    
     try:
         request = InferenceRequest(data=request_data)
     except Exception as e:
@@ -83,16 +94,10 @@ async def infer(image: UploadFile = File(...),
 
 if __name__ == "__main__":
 
-    # Testing server is running from client side
-    # 1. use http://127.0.0.1:8080/ or http://127.0.0.1:8080/docs to test if running
-    # 2. use curl command to send API through terminal
-    # uvicorn src.cgh_sud_fastapi.inference_fastapi:app --reload
-    # standalone: python -m src.cgh_sud_fastapi.inference_fastapi
-
     uvicorn.run(
         "inference_fastapi:app",
         host="127.0.0.1",
-        reload=True,  # change to false after development
+        reload=False,  # change to false after development
         port=4000,
         log_level=None,
     )
