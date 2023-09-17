@@ -16,7 +16,7 @@ st.sidebar.title("Mode Selection")
 mode = st.sidebar.radio("Select Mode", ["Upload Image", "Everything", "Box", "Text", "Points"])
 
 if "text_data" not in st.session_state:
-    st.session_state.text_data = []
+    st.session_state.text_data = ''
 
 st.title("FastSAM Inference Tool! 😊")
 
@@ -90,13 +90,13 @@ elif mode == "Text":
 
         if st.button("Add Text"):
             if text_input:
-                st.session_state.text_data.append(text_input)
+                st.session_state.text_data = text_input
                 st.success(f"Text added: {text_input}")
                 text_input = ""
         
         if len(st.session_state.text_data) > 0:
             if st.button("Predict"):
-                result = st.session_state.predict.predict_text(st.session_state.image_bytes, st.session_state.text_data[0])
+                result = st.session_state.predict.predict_text(st.session_state.image_bytes, st.session_state.text_data)
                 image_container.image(result.content, caption="Result Image", use_column_width=True)
 
 
