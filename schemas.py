@@ -1,5 +1,6 @@
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, validator, model_validator
 from typing import List, Union
+import json
 
 class EverythingMode(BaseModel):
     mode: str = "everything"
@@ -14,7 +15,7 @@ class EverythingMode(BaseModel):
 class BoxMode(BaseModel):
     mode: str
     bboxes: List[List[float]]
-
+    
     @validator("mode")
     def validate_mode(cls, value):
         expected_mode = "box"
@@ -65,3 +66,9 @@ class PointsMode(BaseModel):
     
 class InferenceRequest(BaseModel):
     data: Union[PointsMode, BoxMode, TextMode, EverythingMode]
+    @model_validator(mode='before')
+    @classmethod
+    def validate_to_json(cls, value):
+        if isinstance(value, str):
+            return cls(**json.loads(value))
+        return value

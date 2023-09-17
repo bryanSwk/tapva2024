@@ -1,10 +1,11 @@
 import logging
 from io import BytesIO
 from typing import Dict
+import cv2
 import fastapi
 import uvicorn
-from fastapi import FastAPI, File, UploadFile, HTTPException
-
+from fastapi import FastAPI, File, UploadFile, HTTPException, Form, Body, Depends
+from starlette.responses import StreamingResponse
 from fastapi.responses import JSONResponse
 from hydra import compose, initialize
 from omegaconf import DictConfig
@@ -62,7 +63,7 @@ async def ping(
 
 @app.post("/infer/")
 async def infer(image: UploadFile = File(...), 
-                request_data: Json = EverythingMode()
+                request: InferenceRequest = InferenceRequest(data=EverythingMode())
                 ):
     """
     Endpoint for image inference.
@@ -75,11 +76,6 @@ async def infer(image: UploadFile = File(...),
         dict: A dictionary containing the inference result and mode information.
     """
     
-    try:
-        request = InferenceRequest(data=request_data)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
     image_data = await image.read()
     pil_image = Image.open(BytesIO(image_data))
 
@@ -88,8 +84,12 @@ async def infer(image: UploadFile = File(...),
     if request.data.mode not in allowed_modes:
         return {"error": "Invalid mode. Mode must be one of 'everything', 'box', 'text', 'points'"}
     else:
-        app.model.predict(pil_image, request.model_dump())
-    return {"message": "Image uploaded, processed, and mode selected successfully", "mode": request.data.mode}
+        cv2img = app.model.predict(pil_image, request.model_dump())
+        _, im_png = cv2.imencode(".png", cv2img)
+        im_png_stream = BytesIO(im_png)
+        im_png_stream.seek(0)
+    
+    return StreamingResponse(im_png_stream, media_type="image/png")
 
 
 if __name__ == "__main__":
