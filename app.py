@@ -1,9 +1,6 @@
 import streamlit as st
-from streamlit_drawable_canvas import st_canvas
-from PIL import Image
+from PIL import Image, ImageDraw
 from io import BytesIO
-import pandas as pd
-import numpy as np
 from utils.streamlit.predict_calls import PredictAPI
 
 if "uploaded_image" not in st.session_state:
@@ -19,6 +16,26 @@ if "text_data" not in st.session_state:
     st.session_state.text_data = ''
 
 st.title("FastSAM Inference Tool! 😊")
+
+st.session_state.points = []
+st.session_state.pointlabels = []
+
+def draw_bounding_box(image, coordinates):
+    draw = ImageDraw.Draw(image)
+    x_top_left, y_top_left, x_bottom_right, y_bottom_right = map(int, coordinates)
+    draw.rectangle([(x_top_left, y_top_left), (x_bottom_right, y_bottom_right)], outline="red", width=3)
+    return image
+
+def draw_points(image, points, labels):
+    draw = ImageDraw.Draw(image)
+    
+    for i, point in enumerate(points):
+        x, y = point
+        label = labels[i]
+        color = "red" if label == 0 else "green"
+        draw.rectangle([(x-2, y-2), (x+2, y+2)], outline=color, fill=color)
+    
+    return image
 
 if mode == "Upload Image":
     st.subheader("Upload an Image")
@@ -44,39 +61,6 @@ elif mode == "Everything":
         result = st.session_state.predict.predict_everything(st.session_state.image_bytes)
         image_container.image(result.content, caption="Result Image")
 
-elif mode == "Box":
-    st.subheader("Box Mode")
-    uploaded_image = st.session_state.uploaded_image
-    if uploaded_image is not None:
-        image_container = st.empty()
-        label_color = (
-            st.sidebar.color_picker("Annotation color: ", "#F5F0F0") + "77"
-        )
-        mode = "transform" if st.sidebar.checkbox("Move ROIs", False) else "rect"
-        width, height = uploaded_image.size
-        canvas_result = st_canvas(
-            fill_color=label_color,
-            stroke_width=1,
-            background_image=uploaded_image,
-            height=320,
-            width=512,
-            drawing_mode=mode,
-            key="box"
-        )
-        if canvas_result.json_data is not None:
-            df = pd.json_normalize(canvas_result.json_data["objects"])
-            if len(df) > 0:
-                df['x_top_left'] = df['left'] / 512
-                df['y_top_left'] = df['top'] / 320
-                df['x_bottom_right'] = (df['left'] + df['width'])/ 512
-                df['y_bottom_right'] = (df['top'] + df['height']) / 320                
-
-                if st.button("Predict"):
-                    zipped_columns = df[["x_top_left", "y_top_left", "x_bottom_right", "y_bottom_right"]].values.tolist()
-                    result = st.session_state.predict.predict_box(st.session_state.image_bytes, zipped_columns)
-                    image_container.image(result.content, caption="Result Image")
-                st.dataframe(df[["x_top_left", "y_top_left", "x_bottom_right", "y_bottom_right"]])
-
 elif mode == "Text":
 
     st.subheader("Text Mode")
@@ -100,45 +84,65 @@ elif mode == "Text":
                 image_container.image(result.content, caption="Result Image", use_column_width=True)
 
 
+elif mode == "Box":
+    st.subheader("Box Mode")
+    uploaded_image = st.session_state.uploaded_image
+    if uploaded_image is not None:
+        image_container = st.empty()
+        image_container.image(uploaded_image, caption="Uploaded Image", use_column_width=True)
+        st.write("Enter 4 comma-separated integers to draw a bounding box.")
+
+        bbox_input = st.text_input("Bounding Box (x_top_left, y_top_left, x_bottom_right, y_bottom_right)")
+
+        if len(bbox_input.split(",")) == 4:
+            coordinates = [int(coord.strip()) for coord in bbox_input.split(",")]
+
+            width, height = uploaded_image.size
+
+            coordinates[0] = coordinates[0] / width
+            coordinates[1] = coordinates[1] / height
+            coordinates[2] = coordinates[2] / width
+            coordinates[3] = coordinates[3] / height
+            
+            img_with_bbox = draw_bounding_box(uploaded_image, coordinates)
+            image_container.image(img_with_bbox, caption="Image with Bounding Box", use_column_width=True)
+
+        if st.button("Predict"):
+            result = st.session_state.predict.predict_box(st.session_state.image_bytes, [coordinates])
+            image_container.image(result.content, caption="Result Image")
+
+
 elif mode == "Points":
     st.subheader("Point Mode")
     uploaded_image = st.session_state.uploaded_image
 
     if uploaded_image is not None:
         image_container = st.empty()
-        #09EA29 Green #EA1909 Red
-        point_display_radius = st.sidebar.slider("Point display radius: ", 1, 25, 3)
-        mode = "transform" if st.sidebar.checkbox("Move ROIs", False) else "point"
+        image_container.image(uploaded_image, caption="Uploaded Image", use_column_width=True)
 
-        label_type = st.sidebar.selectbox("Label Type", ["Background", "Foreground"])
-        
-        if label_type == "Foreground":
-            label_color = "#09EA29"
-        else:
-            label_color = "#EA1909"
+        width, height = uploaded_image.size
 
-        canvas_result = st_canvas(
-            fill_color=label_color,
-            stroke_width=1,
-            background_image=uploaded_image,
-            height=320,
-            width=512,
-            drawing_mode=mode,
-            point_display_radius=point_display_radius,
-            key="point"
-        )
-        if canvas_result.json_data is not None:
-            df = pd.json_normalize(canvas_result.json_data["objects"])
-            if len(df) > 0:
-                df['top'] = np.maximum(df['top'], 0)
-                df['left'] = np.maximum(df['left'], 0)
-                df['label'] = np.where(df['fill'] == '#09EA29', 1, 0)
-                df['x'] = df['left'] / 512
-                df['y'] = df['top'] / 320
-                if st.button("Predict"):
-                    points = df[["x", "y"]].values.tolist()
-                    pointlabels = df["label"].values.tolist()
-                    result = st.session_state.predict.predict_points(st.session_state.image_bytes, points, pointlabels)
-                    image_container.image(result.content, caption="Result Image")
-                st.dataframe(df[["x", "y", "label"]])
+        point_x = st.text_input("Point (x, y)")
+        point_label = st.text_input("Label (0 or 1)")
+
+    if st.button("Add Point") and point_x and point_label:
+        try:
+            x, y = map(int, point_x.split(","))
+            label = int(point_label)
+            if label in [0, 1]:
+                st.session_state.points.append([x, y])
+                st.session_state.pointlabels.append(label)
+            else:
+                st.warning("Label must be 0 or 1.")
+        except ValueError:
+            st.warning("Invalid point coordinates or label. Please use the format 'x,y' for coordinates and enter a valid label.")
+
+        img_with_points = draw_points(uploaded_image, st.session_state.points, st.session_state.pointlabels)
+        image_container.image(img_with_points, caption="Image with Points", use_column_width=True)
+    
+    if st.button("Predict"):
+        points = [[point[0]/width, point[1]/height] for point in st.session_state.points]
+        result = st.session_state.predict.predict_points(st.session_state.image_bytes, points, st.session_state.pointlabels)
+        image_container.image(result.content, caption="Result Image")
+
 
