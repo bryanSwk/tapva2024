@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 import hydra
 from omegaconf import DictConfig
 
-from utils.annotation_utils import format_results, retrieve, crop_image
-from utils.plotting_utils import store, plot_to_result
+from utils.model.annotation_utils import format_results, retrieve, crop_image
+from utils.model.plotting_utils import store, plot_to_result
 
 
 try:
@@ -68,21 +68,19 @@ class InferenceModel:
         if payload['data']['mode'] in self.function_mapping:
             func_kwargs = {key: payload['data'][key] for key in payload['data'] if key != 'mode'}
             annotation = self.function_mapping[payload['data']['mode']](image, **func_kwargs)
-            print(payload['data']['mode'])
-            print(annotation)
             if payload['data']['mode'] == "everything":
                 annotation = annotation[0].masks.data
             result = plot_to_result(image, annotation)
-            output_path = os.path.join(self.cfg.inference.output_path, 'output.jpg')
-            store(result, output_path)
-            print("success!")
+            # Uncomment for local storage
+            # output_path = os.path.join(self.cfg.inference.output_path, 'output.jpg')
+            # store(result, output_path) 
+            return result
         
         else:
-            print("wrong format")
+            raise ValueError("Mode not supported. Try: 'everything', 'text', 'box', 'points'.")
 
 
     def annotate_everything(self, image):
-        image.show()
         ann = self.model(image,
                         device=self.device,
                         retina_masks=True,
@@ -147,7 +145,6 @@ class InferenceModel:
             return np.array([annotations[max_idx]['segmentation']])
         
         else:
-            print("NONE")
             return []
 
     def annotate_point(self, image, points: List[List[int]], pointlabel: List):
@@ -175,16 +172,3 @@ class InferenceModel:
                         onemask[mask] = 0
             onemask = onemask >= 1
             return np.array([onemask])
-        
-    
-
-        
-
-@hydra.main(config_path="./config", config_name="config.yaml")
-def run_standalone(config):
-    model = InferenceModel(config)
-    # model.predict()
-
-
-if __name__ == "__main__":
-    run_standalone()

@@ -103,6 +103,7 @@ def plot_to_result(image,
     img_array = np.frombuffer(buf, dtype=np.uint8).reshape(rows, cols, 3)
     result = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
     plt.close()
+    result = result[:, :, ::-1] #convert back to RGB
     return result
         
 def store(result, 
@@ -112,7 +113,6 @@ def store(result,
     path = os.path.dirname(os.path.abspath(output_path))
     if not os.path.exists(path):
         os.makedirs(path)
-    result = result[:, :, ::-1] #convert back to RGB
     cv2.imwrite(output_path, result)
     
 #   CPU post process
