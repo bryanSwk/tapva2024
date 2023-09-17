@@ -31,7 +31,7 @@ def config() -> DictConfig:
     return cfg
 
 @app.on_event("startup")
-def startup_event(config=config()) -> None:
+def startup_event(config: DictConfig = config()) -> None:
     """
     Startup event when fastAPI server starts up
     -------------------------------------------
@@ -97,7 +97,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "inference_fastapi:app",
         host="127.0.0.1",
-        reload=False,  # change to false after development
+        reload=False,
         port=4000,
         log_level=None,
     )
