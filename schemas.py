@@ -13,7 +13,7 @@ class EverythingMode(BaseModel):
 
 class BoxMode(BaseModel):
     mode: str
-    bboxes: List[float]
+    bboxes: List[List[float]]
 
     @validator("mode")
     def validate_mode(cls, value):
@@ -24,10 +24,12 @@ class BoxMode(BaseModel):
     
     @validator('bboxes')
     def validate_box_prompt(cls, value):
-        if len(value) != 4:
-            raise ValueError("bboxes must have exactly 4 elements")
-        if any(not 0 <= v <= 1 for v in value):
-            raise ValueError("Each point in 'bboxes' must have values in the range [0, 1]")
+        for bbox in value:
+            if len(bbox) != 4:
+                raise ValueError("bboxes must have exactly 4 elements")
+            for v in bbox:
+                if not 0 <= v <= 1:
+                    raise ValueError("Each point in 'bboxes' must have values in the range [0, 1]")
         return value
 
 class TextMode(BaseModel):

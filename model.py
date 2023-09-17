@@ -99,8 +99,13 @@ class InferenceModel:
             for bbox in bboxes:
                 assert (bbox[2] != 0 and bbox[3] != 0)
                 masks = ann[0].masks.data
-                target_height = image.shape[0]
-                target_width = image.shape[1]
+                target_height = np.array(image).shape[0]
+                target_width = np.array(image).shape[1]
+                # Extra step to undo normalization
+                bbox[0] = int(bbox[0] * target_width)
+                bbox[1] = int(bbox[1] * target_height)
+                bbox[2] = int(bbox[2] * target_width)
+                bbox[3] = int(bbox[3] * target_height)
                 h = masks.shape[1]
                 w = masks.shape[2]
                 if h != target_height or w != target_width:
@@ -149,8 +154,9 @@ class InferenceModel:
         ann = self.annotate_everything(image)
         if ann and points and pointlabel is not None:
             masks = format_results(ann[0], 0)
-            target_height = image.shape[0]
-            target_width = image.shape[1]
+            target_height = np.array(image).shape[0]
+            target_width = np.array(image).shape[1]
+            points = [[int(point[0] * target_width), int(point[1] * target_height)] for point in points]
             h = masks[0]['segmentation'].shape[0]
             w = masks[0]['segmentation'].shape[1]
             if h != target_height or w != target_width:
