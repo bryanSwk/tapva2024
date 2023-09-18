@@ -110,7 +110,7 @@ elif mode == "Points":
         point_display_radius = st.sidebar.slider("Point display radius: ", 1, 25, 3)
         mode = "transform" if st.sidebar.checkbox("Move ROIs", False) else "point"
 
-        label_type = st.sidebar.selectbox("Label Type", ["Background", "Foreground"])
+        label_type = st.sidebar.selectbox("Label Type", ["Foreground", "Background"])
         
         if label_type == "Foreground":
             label_color = "#09EA29"
