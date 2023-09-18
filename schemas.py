@@ -1,9 +1,24 @@
 from pydantic import BaseModel, validator, model_validator
-from typing import List, Union
+from typing import List
 import json
 
-class EverythingMode(BaseModel):
-    mode: str = "everything"
+class ModeType(BaseModel):
+
+    @model_validator(mode='before')
+    @classmethod
+    def validate_extra_fields(cls, value):
+        if isinstance(value, str):
+            value = json.loads(value)
+            allowed_fields = set(cls.__annotations__.keys())
+            for key in value.keys():
+                if key not in allowed_fields:
+                    raise ValueError("Extra fields not allowed")
+            return value
+        
+        return value
+    
+class EverythingMode(ModeType):
+    mode: str
 
     @validator("mode")
     def validate_mode(cls, value):
@@ -12,10 +27,10 @@ class EverythingMode(BaseModel):
             raise ValueError(f"Expected '{expected_mode}' as mode.")
         return value
 
-class BoxMode(BaseModel):
+class BoxMode(ModeType):
     mode: str
-    bboxes: List[List[float]]
-    
+    box_prompt: List[List[float]]
+
     @validator("mode")
     def validate_mode(cls, value):
         expected_mode = "box"
@@ -23,19 +38,19 @@ class BoxMode(BaseModel):
             raise ValueError(f"Expected '{expected_mode}' as mode.")
         return value
     
-    @validator('bboxes')
+    @validator('box_prompt')
     def validate_box_prompt(cls, value):
         for bbox in value:
             if len(bbox) != 4:
-                raise ValueError("bboxes must have exactly 4 elements")
+                raise ValueError("box_prompt must have exactly 4 elements")
             for v in bbox:
                 if not 0 <= v <= 1:
-                    raise ValueError("Each point in 'bboxes' must have values in the range [0, 1]")
+                    raise ValueError("Each point in 'box_prompt' must have values in the range [0, 1]")
         return value
 
-class TextMode(BaseModel):
-    mode: str = "text"
-    text: str
+class TextMode(ModeType):
+    mode: str
+    text_prompt: str
 
     @validator("mode")
     def validate_mode(cls, value):
@@ -44,10 +59,10 @@ class TextMode(BaseModel):
             raise ValueError(f"Expected '{expected_mode}' as mode.")
         return value
     
-class PointsMode(BaseModel):
-    mode: str = "points"
-    points: List[List[float]]
-    pointlabel: List[int]
+class PointsMode(ModeType):
+    mode: str
+    point_prompt: List[List[float]]
+    point_label: List[int]
 
     @validator("mode")
     def validate_mode(cls, value):
@@ -56,19 +71,11 @@ class PointsMode(BaseModel):
             raise ValueError(f"Expected '{expected_mode}' as mode.")
         return value
 
-    @validator('points')
+    @validator('point_prompt')
     def validate_point_prompt(cls, value):
         if any(not 0 <= x <= 1 or not 0 <= y <= 1 for x, y in value):
-            raise ValueError("Each point in 'points' must have values in the range [0, 1]")
+            raise ValueError("Each point in 'point_prompt' must have values in the range [0, 1]")
         if any(len(point) != 2 for point in value):
-            raise ValueError("Each point in points must have exactly 2 elements")
+            raise ValueError("Each point in point_prompt must have exactly 2 elements")
         return value
-    
-class InferenceRequest(BaseModel):
-    data: Union[PointsMode, BoxMode, TextMode, EverythingMode]
-    @model_validator(mode='before')
-    @classmethod
-    def validate_to_json(cls, value):
-        if isinstance(value, str):
-            return cls(**json.loads(value))
-        return value
+

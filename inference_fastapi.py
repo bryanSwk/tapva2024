@@ -1,16 +1,15 @@
 import logging
 from io import BytesIO
-from typing import Dict
+from typing import Dict, Union
 import cv2
 import fastapi
 import uvicorn
-from fastapi import FastAPI, File, UploadFile, HTTPException, Form, Body, Depends
+from fastapi import FastAPI, File, UploadFile, Body
 from starlette.responses import StreamingResponse
 from fastapi.responses import JSONResponse
 from hydra import compose, initialize
 from omegaconf import DictConfig
-from schemas import InferenceRequest, EverythingMode
-from pydantic import Json
+from schemas import EverythingMode, BoxMode, TextMode, PointsMode
 from PIL import Image
 
 from model import InferenceModel
@@ -63,7 +62,7 @@ async def ping(
 
 @app.post("/infer/")
 async def infer(image: UploadFile = File(...), 
-                request: InferenceRequest = InferenceRequest(data=EverythingMode())
+                request: Union[PointsMode, BoxMode, TextMode, EverythingMode] = Body(...)
                 ):
     """
     Endpoint for image inference.
@@ -81,7 +80,7 @@ async def infer(image: UploadFile = File(...),
 
     allowed_modes = ["everything", "box", "text", "points"]
     print(request.model_dump())
-    if request.data.mode not in allowed_modes:
+    if request.mode not in allowed_modes:
         return {"error": "Invalid mode. Mode must be one of 'everything', 'box', 'text', 'points'"}
     else:
         cv2img = app.model.predict(pil_image, request.model_dump())

@@ -65,10 +65,10 @@ class InferenceModel:
         self.model = FastSAM(weights_path)
 
     def predict(self, image, payload):
-        if payload['data']['mode'] in self.function_mapping:
-            func_kwargs = {key: payload['data'][key] for key in payload['data'] if key != 'mode'}
-            annotation = self.function_mapping[payload['data']['mode']](image, **func_kwargs)
-            if payload['data']['mode'] == "everything":
+        if payload['mode'] in self.function_mapping:
+            func_kwargs = {key: payload[key] for key in payload if key != 'mode'}
+            annotation = self.function_mapping[payload['mode']](image, **func_kwargs)
+            if payload['mode'] == "everything":
                 annotation = annotation[0].masks.data
             result = plot_to_result(image, annotation)
             # Uncomment for local storage
@@ -90,11 +90,11 @@ class InferenceModel:
                         )
         return ann
     
-    def annotate_box(self, image, bboxes: List[List[int]]):
+    def annotate_box(self, image, box_prompt: List[List[int]]):
         ann = self.annotate_everything(image)
-        if ann and bboxes is not None:
+        if ann and box_prompt is not None:
             max_iou_index = []
-            for bbox in bboxes:
+            for bbox in box_prompt:
                 assert (bbox[2] != 0 and bbox[3] != 0)
                 masks = ann[0].masks.data
                 target_height = np.array(image).shape[0]
@@ -132,12 +132,12 @@ class InferenceModel:
         else:
             return []
     
-    def annotate_text(self, image, text: str):
+    def annotate_text(self, image, text_prompt: str):
         ann = self.annotate_everything(image)
-        if ann and text is not None:
+        if ann and text_prompt is not None:
             results = format_results(ann[0], 0)
             cropped_boxes, cropped_images, not_crop, filter_id, annotations = crop_image(image, results)
-            scores = retrieve(self.clip_model, self.preprocess, cropped_boxes, text, device=self.device)
+            scores = retrieve(self.clip_model, self.preprocess, cropped_boxes, text_prompt, device=self.device)
             max_idx = scores.argsort()
             max_idx = max_idx[-1]
             max_idx += sum(np.array(filter_id) <= int(max_idx))
@@ -147,13 +147,13 @@ class InferenceModel:
         else:
             return []
 
-    def annotate_point(self, image, points: List[List[int]], pointlabel: List):
+    def annotate_point(self, image, point_prompt: List[List[int]], point_label: List):
         ann = self.annotate_everything(image)
-        if ann and points and pointlabel is not None:
+        if ann and point_prompt and point_label is not None:
             masks = format_results(ann[0], 0)
             target_height = np.array(image).shape[0]
             target_width = np.array(image).shape[1]
-            points = [[int(point[0] * target_width), int(point[1] * target_height)] for point in points]
+            points = [[int(point[0] * target_width), int(point[1] * target_height)] for point in point_prompt]
             h = masks[0]['segmentation'].shape[0]
             w = masks[0]['segmentation'].shape[1]
             if h != target_height or w != target_width:
@@ -166,9 +166,9 @@ class InferenceModel:
                 else:
                     mask = annotation
                 for i, point in enumerate(points):
-                    if mask[point[1], point[0]] == 1 and pointlabel[i] == 1:
+                    if mask[point[1], point[0]] == 1 and point_label[i] == 1:
                         onemask[mask] = 1
-                    if mask[point[1], point[0]] == 1 and pointlabel[i] == 0:
+                    if mask[point[1], point[0]] == 1 and point_label[i] == 0:
                         onemask[mask] = 0
             onemask = onemask >= 1
             return np.array([onemask])
