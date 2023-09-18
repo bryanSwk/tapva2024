@@ -7,30 +7,42 @@ class PredictAPI:
         self.headers = {
             'accept': 'application/json',
         }
+        self.error_msg = "Response"
 
     def predict_everything(self, image):
         files={"image": image}
         mode = "everything"
         data = {'request': f'{{"mode":"{mode}"}}'}
         response = requests.post(self.url, headers=self.headers, files=files, data=data)
-        return response
+        if response.status_code == 200:
+            return response
+        else:
+            return "Prediction Error"
     def predict_text(self, image, text):
         files={"image": image}
         mode = 'text'
         data = {'request': f'{{"mode":"{mode}", "text_prompt":"{text}"}}'}
         response = requests.post(self.url, headers=self.headers, files=files, data=data)
-        return response
+        if response.status_code == 200:
+            return response
+        else:
+            return "Prediction Error"
 
     def predict_box(self, image, bboxes):
         files={"image": image}
         mode = "box"
         data = {"request": json.dumps({"mode": f"{mode}", "box_prompt": bboxes})}
         response = requests.post(self.url, headers=self.headers, files=files, data=data)
-        return response
-    
+        if response.status_code == 200:
+            return response
+        else:
+            return "Prediction Error"
     def predict_points(self, image, points, pointlabels):
         files={"image": image}
         mode = "points"
         data = {"request": json.dumps({"mode": f"{mode}", "point_prompt": points, "point_label": pointlabels})}
         response = requests.post(self.url, headers=self.headers, files=files, data=data)
-        return response
+        if response.status_code == 200:
+            return response
+        else:
+            return "Prediction Error"
