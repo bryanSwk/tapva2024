@@ -6,23 +6,29 @@ This project demonstrates how to perform inference using the [FastSAM](https://g
 
 ## Installation
 
-Clone the repository:
+1. Clone the repository:
 
 ```
 git clone https://github.com/bryanSwk/tapva2024.git
 cd tapva2024
 ```
 
-Create the environment:
+2. Create the environment:
 
 ```
-conda env create -f fastsam-gui.yml
+conda create -n FastSAM python=3.9
 conda activate FastSAM
 ```
 
-Install Torch from: [Link](https://pytorch.org/get-started/locally/)
+3. Install Torch from: [Link](https://pytorch.org/get-started/locally/)
 
-Install CLIP:
+4. Install requirements:
+
+```
+pip install -r requirements.txt
+```
+
+5. Install CLIP:
 ```
 pip install git+https://github.com/openai/CLIP.git
 ```
