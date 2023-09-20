@@ -45,7 +45,8 @@ Run FastAPI container:
 ```
 docker run --rm -it -p 4000:4000 `
     --name fastapi-server `
-    -v "$(Get-Location)\weights:/fastsam/weights" `
+    --gpus all `
+    -v "$(Get-Location)\weights:/home/user/tap-va/weights" `
     fastapi:latest
 ```
 Start Streamlit App:

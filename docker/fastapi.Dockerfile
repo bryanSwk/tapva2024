@@ -1,4 +1,6 @@
-FROM nvidia/cuda:11.3.0-cudnn8-devel-ubuntu18.04
+FROM nvidia/cuda:11.0.3-cudnn8-devel-ubuntu18.04
+
+SHELL ["/bin/bash", "-c"]
 
 ARG REPO_DIR="."
 ARG CONDA_ENV_FILE="FastSAM.yml"
@@ -22,7 +24,7 @@ RUN touch "$HOME_DIR/.bashrc"
 RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/3bf863cc.pub
 
 RUN apt-get update && \
-    apt-get -y install curl wget locales && \
+    apt-get -y install curl locales git libgl1-mesa-glx libglib2.0-0 libsm6 libxrender-dev libxext6 && \
     sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
     locale-gen && \
     dpkg-reconfigure --frontend=noninteractive locales && \
@@ -56,11 +58,16 @@ RUN $CONDA_BIN env create -f $PROJECT_NAME/$CONDA_ENV_FILE && \
 
 COPY $REPO_DIR $PROJECT_NAME
 
+RUN mkdir $HOME_DIR/$PROJECT_NAME/weights
+
 RUN chown -R 8888:8888 $HOME_DIR && \
     rm /bin/sh && ln -s /bin/bash /bin/sh
 
-USER 8888
-
 WORKDIR $HOME_DIR/$PROJECT_NAME
 
-ENTRYPOINT [ "/bin/bash", "./entrypoint/api-entrypoint.sh" ]
+USER 8888
+
+EXPOSE 4000
+
+RUN chmod -R +x utils
+ENTRYPOINT [ "/bin/bash", "./utils/entrypoint/api-entrypoint.sh" ]
