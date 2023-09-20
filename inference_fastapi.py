@@ -101,6 +101,13 @@ async def infer(image: UploadFile = File(...),
     if mode in modes:
         model_class = modes[mode]
 
+        if mode == "points":
+            try:
+                assert len(point_prompt) == len(point_label) 
+            except ValueError as e:
+                raise HTTPException(status_code=400, 
+                                    detail=f"Length mismatch: Prompt: {len(point_prompt)} != Label: {len(point_label)}")
+
         try:
             validated_data = model_class.parse_obj(input_data)
             cv2img = app.model.predict(pil_image, validated_data.model_dump())
