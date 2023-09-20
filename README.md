@@ -37,7 +37,7 @@ pip install git+https://github.com/openai/CLIP.git
 Download weights using:
 
 ```
-./dl-weights.sh
+./scripts/dl-weights.sh
 ```
 
 if transfer.sh link expires:

@@ -69,5 +69,5 @@ USER 8888
 
 EXPOSE 4000
 
-RUN chmod -R +x utils
-ENTRYPOINT [ "/bin/bash", "./utils/entrypoint/api-entrypoint.sh" ]
+RUN chmod -R +x scripts
+ENTRYPOINT [ "/bin/bash", "./scripts/entrypoint/api-entrypoint.sh" ]
