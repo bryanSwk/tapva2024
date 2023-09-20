@@ -36,10 +36,19 @@ pip install git+https://github.com/openai/CLIP.git
 
 Download weights using:
 
-TODO: upload weights to s3/gcp
 ```
-curl 
+./dl-weights.sh
 ```
+
+if transfer.sh link expires:
+
+```
+ViT-B-32.pt: https://drive.google.com/file/d/1ucNN-iEx4i-omhzuuQMMlSOnndM01CyG/view?usp=drive_link
+FastSAM-x.pt: https://drive.google.com/file/d/1qhxab2Qpj08AaqrJMmCby1oEI8QqzDze/view?usp=drive_link
+
+Download and place in tapva2024/weights
+```
+
 Build inference container:
 ```
 docker build `
