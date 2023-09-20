@@ -9,12 +9,12 @@ from starlette.responses import StreamingResponse
 from fastapi.responses import JSONResponse
 from hydra import compose, initialize
 from omegaconf import DictConfig
-from schemas import EverythingMode, BoxMode, TextMode, PointsMode
+from src.fastapi.schemas import EverythingMode, BoxMode, TextMode, PointsMode
 from PIL import Image
 
 from pydantic import Json
 
-from model import InferenceModel
+from src.model import InferenceModel
 
 logging.warnings.filterwarnings("ignore")
 logging.basicConfig(level=logging.INFO)

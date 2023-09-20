@@ -1,18 +1,14 @@
 from typing import List
 import logging
-import os
 import numpy as np
 
-from fastsam import FastSAM, FastSAMPrompt
 import torch
-import cv2
-import matplotlib.pyplot as plt
 
-import hydra
 from omegaconf import DictConfig
 
-from utils.model.annotation_utils import format_results, retrieve, crop_image
-from utils.model.plotting_utils import store, plot_to_result
+from src.fastsam import FastSAM, FastSAMPrompt
+from src.model_utils.annotation_utils import format_results, retrieve, crop_image
+from src.model_utils.plotting_utils import store, plot_to_result
 
 
 try:
