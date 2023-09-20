@@ -1,20 +1,15 @@
 from pydantic import BaseModel, validator, model_validator
 from typing import List
-import json
 
 class ModeType(BaseModel):
 
     @model_validator(mode='before')
     @classmethod
     def validate_extra_fields(cls, value):
-        if isinstance(value, str):
-            value = json.loads(value)
-            allowed_fields = set(cls.__annotations__.keys())
-            for key in value.keys():
-                if key not in allowed_fields:
-                    raise ValueError("Extra fields not allowed")
-            return value
-        
+        allowed_fields = set(cls.__annotations__.keys())
+        for key in value.keys():
+            if key not in allowed_fields:
+                raise ValueError("Extra fields not allowed")
         return value
     
 class EverythingMode(ModeType):
