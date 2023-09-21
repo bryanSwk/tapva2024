@@ -66,7 +66,7 @@ async def ping(
 async def infer(image: UploadFile = File(...),
                  mode: str = Form(...),
                  text_prompt: Union[str,None] = Form(None),
-                 box_prompt: Union[Json[List[List[float]]], None] = Form(None),
+                 box_prompt: Union[Json[List[float]], Json[List[List[float]]], None] = Form(None),
                  point_prompt: Union[Json[List[List[float]]], None] = Form(None),
                  point_label: Union[Json[List[int]], None] = Form(None)
                  ) -> StreamingResponse: 
@@ -77,7 +77,7 @@ async def infer(image: UploadFile = File(...),
         image (UploadFile, required): The input image for the inference.
         mode (str, required): The inference mode. Must be one of ["everything", "text", "box", "points"].
         text_prompt (str, optional): The text prompt for inference (if applicable).
-        box_prompt (Json[List[List[float]]], optional): The bounding box prompts in deserialized JSON format (if applicable).
+        box_prompt (Json[List[float]], Json[List[List[float]]], optional): The bounding box prompts in deserialized JSON format (if applicable).
         point_prompt (Json[List[List[float]]], optional): The point prompts in deserialized JSON format (if applicable).
         point_label (Json[List[int]], optional): The point labels in deserialized JSON format (if applicable).
 
@@ -89,6 +89,9 @@ async def infer(image: UploadFile = File(...),
     """
                  
     input_data = {key: value for key, value in locals().items() if key != 'image' and value is not None}
+    if 'box_prompt' in input_data.keys():
+        if isinstance(input_data['box_prompt'], list) and all(isinstance(item, float) for item in input_data['box_prompt']):
+            input_data['box_prompt'] = [input_data['box_prompt']]
 
     image_data = await image.read()
     pil_image = Image.open(BytesIO(image_data))
