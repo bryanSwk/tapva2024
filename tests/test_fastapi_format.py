@@ -1,7 +1,7 @@
 import pytest
 import requests
 
-INFER_API_URL = "http://127.0.0.1:4000/infer/"
+INFER_API_URL = "http://127.0.0.1:4000/infer"
 
 def test_extra_fields():
     files={"image": open("./assets/dogs.jpg", "rb")}

@@ -3,6 +3,9 @@
 
 This project demonstrates how to perform inference using the [FastSAM](https://github.com/CASIA-IVA-Lab/FastSAM) model through FastAPI endpoints. The application is containerized with Docker and includes a Streamlit interface for easy interaction.
 
+Examples:
+
+<img src="./assets/github-example.png" width="1000">
 
 ## Installation
 
@@ -49,6 +52,8 @@ FastSAM-x.pt: https://drive.google.com/file/d/1qhxab2Qpj08AaqrJMmCby1oEI8QqzDze/
 Download and place in tapva2024/weights
 ```
 
+### IMPORTANT!: Before building inference container, ensure that `scripts/entrypoint/api-entrypoint.sh` has the `LF` as EOL Sequence as git tends to convert it to `CRLF`.
+
 Build inference container:
 ```
 docker build `
@@ -68,3 +73,31 @@ Start Streamlit App:
 ```
 streamlit run app.py
 ```
+
+## Unit Tests
+
+To run unit tests, spin up an inference container or run it locally:
+Run pytest in root dir afterwards.
+
+```
+python ./inference_fastapi.py
+pytest
+```
+
+There are 3 parts to the pytest:
+
+- Health
+- Functional
+- Format
+
+This should be the valid output for the correct configuration:
+
+```
+================================================= 10 passed in 7.16s ==================================================
+```
+
+## Optimization
+
+<img src="./assets/inference-timings.png" width="1000">
+
+During loading of the model,

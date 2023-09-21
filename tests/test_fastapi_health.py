@@ -1,8 +1,8 @@
 import pytest
 import requests
 
-PING_API_URL = "http://127.0.0.1:4000/ping/"
-INFER_API_URL = "http://127.0.0.1:4000/infer/"
+PING_API_URL = "http://127.0.0.1:4000/ping"
+INFER_API_URL = "http://127.0.0.1:4000/infer"
 
 
 def test_ping_api():
