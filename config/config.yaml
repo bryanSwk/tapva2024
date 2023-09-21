@@ -7,6 +7,9 @@ inference:
   output_path: "${common_const_tag.base_folder_path}/output/"
   clip_model: "${common_const_tag.base_folder_path}/weights/ViT-B-32.pt"
 
+fastapi:
+  image_payload_limit: 20000000 #20MB
+
 extras:
   max_size: 1024
   conversion_output: "${common_const_tag.base_folder_path}/weights/FastSAM-x.onnx"

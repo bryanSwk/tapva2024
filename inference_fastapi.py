@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 from hydra import compose, initialize
 from omegaconf import DictConfig
 from src.fastapi.schemas import EverythingMode, BoxMode, TextMode, PointsMode
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 
 from pydantic import Json
 
@@ -45,7 +45,7 @@ def startup_event(config: DictConfig = config()) -> None:
     """
     logging.info("Starting server...")
     app.model = InferenceModel(config)
-
+    app.cfg = config
     logging.info("Start server complete")
 
 
@@ -94,7 +94,15 @@ async def infer(image: UploadFile = File(...),
             input_data['box_prompt'] = [input_data['box_prompt']]
 
     image_data = await image.read()
-    pil_image = Image.open(BytesIO(image_data))
+    if len(image_data) < app.cfg.fastapi.image_payload_limit:
+        try:
+            pil_image = Image.open(BytesIO(image_data))
+        except UnidentifiedImageError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+    else:
+        raise HTTPException(status_code=400, 
+                            detail=f"Exceed payload limit of {app.cfg.fastapi.image_payload_limit/1000000} MB")
+
 
     modes = {"everything": EverythingMode,
              "text": TextMode,
