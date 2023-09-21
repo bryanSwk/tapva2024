@@ -1,13 +1,18 @@
 import requests
-import json
 
 class PredictAPI:
+    """
+    Backend inference API for making predictions.
+
+    This class provides methods for directly making predictions through request APIs 
+    using the various methods of FastSAM model backend.
+    """
     def __init__(self) -> None:
         self.url = 'http://127.0.0.1:4000/infer'
         self.headers = {
             'accept': 'application/json',
         }
-        self.error_msg = "Response"
+        self.error_msg = "Prediction Error"
 
     def predict_everything(self, image):
         files={"image": image}
@@ -17,7 +22,7 @@ class PredictAPI:
         if response.status_code == 200:
             return response
         else:
-            return "Prediction Error"
+            return self.error_msg
     def predict_text(self, image, text):
         files={"image": image}
         mode = 'text'
@@ -26,7 +31,7 @@ class PredictAPI:
         if response.status_code == 200:
             return response
         else:
-            return "Prediction Error"
+            return self.error_msg
 
     def predict_box(self, image, bboxes):
         files={"image": image}
@@ -36,7 +41,7 @@ class PredictAPI:
         if response.status_code == 200:
             return response
         else:
-            return "Prediction Error"
+            return self.error_msg
     def predict_points(self, image, points, pointlabels):
         files={"image": image}
         mode = "points"
@@ -45,4 +50,4 @@ class PredictAPI:
         if response.status_code == 200:
             return response
         else:
-            return "Prediction Error"
+            return self.error_msg

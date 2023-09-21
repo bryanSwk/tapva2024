@@ -6,10 +6,9 @@ import torch
 
 from omegaconf import DictConfig
 
-from src.fastsam import FastSAM, FastSAMPrompt
+from src.fastsam import FastSAM
 from src.model_utils.annotation_utils import format_results, retrieve, crop_image
 from src.model_utils.plotting_utils import store, plot_to_result
-
 
 try:
     import clip  # for linear_assignment
@@ -23,9 +22,17 @@ except (ImportError, AssertionError, AttributeError):
 logging.warnings.filterwarnings("ignore")
 logging.basicConfig(level=logging.INFO)
 
-
-
 class InferenceModel:
+    """
+    Wrapper for an Inference Model.
+
+    This class provides a wrapper for an inference model, making it easier to perform inference
+    tasks with the FastSAM model. It includes methods for performing inference on input data.
+
+    Args:
+        config (DictConfig): A hydra configuration object containing model and inference settings.
+    """
+
     def __init__(self, config: DictConfig) -> None:
         
         self.cfg = config
@@ -56,11 +63,24 @@ class InferenceModel:
                                 'box': self.annotate_box,
                                 'points': self.annotate_point
         }
-        
-    def hotreload_model(self, weights_path: str) -> None:
-        self.model = FastSAM(weights_path)
 
-    def predict(self, image, payload):
+    def predict(self, image, payload: dict):
+        """
+        Perform a prediction using the provided PIL Image and payload.
+
+        This method takes a PIL Image as the input image and an additional payload dictionary,
+        and uses them to make a prediction.
+
+        Args:
+            image (PIL.Image): The input image for prediction in the form of a PIL Image.
+            payload (dict): Additional data or information required for the prediction.
+                    The content and format of the payload may vary based on the inference mode.
+
+        Returns:
+            PIL.Image: The prediction result, returned as a PIL Image.
+
+
+        """
         if payload['mode'] in self.function_mapping:
             func_kwargs = {key: payload[key] for key in payload if key != 'mode'}
             annotation = self.function_mapping[payload['mode']](image, **func_kwargs)
@@ -77,6 +97,15 @@ class InferenceModel:
 
 
     def annotate_everything(self, image):
+        """
+        Annotate with FastSAM using everything mode for the provided image.
+
+        Args:
+            image (PIL.Image): The input image for annotation.
+
+        Returns:
+            Annotation: Annotation result for EverythingMode.
+        """
         ann = self.model(image,
                         device=self.device,
                         retina_masks=True,
@@ -87,6 +116,16 @@ class InferenceModel:
         return ann
     
     def annotate_box(self, image, box_prompt: List[List[int]]):
+        """
+        Annotate with FastSAM using BoxMode for the provided image.
+
+        Args:
+            image (PIL.Image): The input image for annotation.
+            box_prompt (List[List[int]]): The bounding box coordinates.
+
+        Returns:
+            Annotation: Annotation result for BoxMode.
+        """
         ann = self.annotate_everything(image)
         if ann and box_prompt is not None:
             max_iou_index = []
@@ -129,6 +168,16 @@ class InferenceModel:
             return []
     
     def annotate_text(self, image, text_prompt: str):
+        """
+        Annotate with FastSAM using TextMode for the provided image.
+
+        Args:
+            image (PIL.Image): The input image for annotation.
+            text_prompt (str): A text prompt of any valid string.
+
+        Returns:
+            Annotation: Annotation result for TextMode.
+        """
         ann = self.annotate_everything(image)
         if ann and text_prompt is not None:
             results = format_results(ann[0], 0)
@@ -144,6 +193,17 @@ class InferenceModel:
             return []
 
     def annotate_point(self, image, point_prompt: List[List[int]], point_label: List):
+        """
+        Annotate with FastSAM using PointMode for the provided image.
+
+        Args:
+            image (PIL.Image): The input image for annotation.
+            point_prompt (List[List[int]]): A list containing normalized point coordinates.
+            point_label (List): Corresponding list containing label information for points.
+
+        Returns:
+            Annotation: Annotation result for PointMode.
+        """
         ann = self.annotate_everything(image)
         if ann and point_prompt and point_label is not None:
             masks = format_results(ann[0], 0)
